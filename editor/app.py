@@ -22,7 +22,16 @@ import threading
 
 import github_sync  # noqa: E402 -- suite auto-push + close warning
 from about import show_about_dialog
-import updater  # noqa: E402 -- Help -> Check for Updates (in-place updater)
+# v2.0.2 (Joshua 2026-10-12): soft import for updater — if updater.py is
+# missing or broken (partial install, failed in-place update), the editor
+# must still open. The Help -> Check for Updates item is only added when
+# the import succeeds.
+try:
+    import updater  # noqa: E402 -- Help -> Check for Updates (in-place updater)
+    _UPDATER_AVAILABLE = True
+except Exception:
+    updater = None
+    _UPDATER_AVAILABLE = False
 from data import (
     Heightfield, FaceSelection, RoadOffsets, build_road_cell_index,
     ensure_data_dir, needs_download, download_terrain, download_roads,
@@ -33,7 +42,7 @@ from terraincanvas import TopDownView, SideView, PlayerEyeView
 
 # App version shown in the Help -> About dialog (bump with each release).
 # Joshua 2026-10-11: version number must be prominent in About.
-APP_VERSION = "2.0.1"
+APP_VERSION = "2.0.2"
 # Display name and icon-theme name for the About dialog.
 APP_NAME = "Adamsville Terrain Editor"
 APP_ICON = "adamsville-terrain-editor-native"
@@ -339,9 +348,12 @@ class TerrainEditorApp:
         glossary_item.connect("activate", self.show_help)
         help_menu.append(glossary_item)
 
-        update_item = Gtk.MenuItem(label="Check for Updates")
-        update_item.connect("activate", self.on_check_updates)
-        help_menu.append(update_item)
+        # v2.0.2: only offer in-place updates when updater.py imported OK.
+        # (A missing/broken updater must never stop the editor opening.)
+        if _UPDATER_AVAILABLE:
+            update_item = Gtk.MenuItem(label="Check for Updates")
+            update_item.connect("activate", self.on_check_updates)
+            help_menu.append(update_item)
 
         about_item = Gtk.MenuItem(label="About")
         about_item.connect("activate", self.show_about)
@@ -562,6 +574,10 @@ class TerrainEditorApp:
         """Help -> Check for Updates: in-place update flow."""
         # (Joshua 2026-10-12: update the installed app in
         # place instead of reinstalling the .deb.)
+        # v2.0.2: guard — this handler is only wired when the updater
+        # imported successfully, but never trust the menu state.
+        if not _UPDATER_AVAILABLE or updater is None:
+            return
         updater.check_for_updates_gui(
             self.window, APP_NAME, APP_VERSION,
             UPDATE_SLUG, UPDATE_MANIFEST_URL)
@@ -844,3 +860,34 @@ class TerrainEditorApp:
         dialog.show_all()
         dialog.run()
         dialog.destroy()
+
+
+# v2.0.2 (Joshua 2026-10-12): the module-level launch code was missing —
+# the class was defined but never instantiated, so the editor exited
+# silently on launch. main() + the __main__ guard fix that.
+def main():
+    """Application entry point."""
+    # v2.0.2 (Joshua 2026-10-12): crash logger. If the editor fails to
+    # start on Joshua's machine, the traceback is written to
+    # ~/.cache/adamsville-terrain-editor-native/crash.log so the real
+    # cause can be diagnosed instead of failing silently.
+    try:
+        from pathlib import Path
+        ensure_data_dir()
+        app = TerrainEditorApp()
+        Gtk.main()
+    except Exception:
+        try:
+            import traceback
+            log_dir = Path.home() / ".cache" / "adamsville-terrain-editor-native"
+            log_dir.mkdir(parents=True, exist_ok=True)
+            with open(log_dir / "crash.log", "w") as f:
+                f.write("Adamsville Terrain Editor %s crash log\n" % APP_VERSION)
+                traceback.print_exc(file=f)
+        except Exception:
+            pass
+        raise
+
+
+if __name__ == "__main__":
+    main()
