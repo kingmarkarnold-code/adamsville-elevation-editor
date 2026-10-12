@@ -1,6 +1,6 @@
 {
-  "version": "2.0.1",
-  "changelog": "Help -> Check for Updates: update the app in place without reinstalling the .deb.",
+  "version": "2.0.2",
+  "changelog": "Crash fix: ADDED THE MISSING LAUNCH CODE \u2014 the editor previously defined its window class but never started it, so nothing opened. Also: soft updater import, crash log at ~/.cache/adamsville-terrain-editor-native/crash.log.",
   "files": [
     {
       "path": "about.py",
@@ -10,7 +10,7 @@
     {
       "path": "app.py",
       "url": "https://raw.githubusercontent.com/kingmarkarnold-code/adamsville-elevation-editor/main/editor/app.py",
-      "sha256": "4435f143d0e8edf68e3903da08d52c1a4280fd6e8f4b669de0c7b22c63c01181"
+      "sha256": "29f071847dd1a521a85be93ec0a337128d647f348ee72641640e0e54405501dd"
     },
     {
       "path": "data.py",
@@ -21,11 +21,6 @@
       "path": "github_sync.py",
       "url": "https://raw.githubusercontent.com/kingmarkarnold-code/adamsville-elevation-editor/main/editor/github_sync.py",
       "sha256": "e4289f5ae72f438a079d994a388d5a5751268886659aeb35f6492ea81b89a3a9"
-    },
-    {
-      "path": "mollie-icon.png",
-      "url": "https://raw.githubusercontent.com/kingmarkarnold-code/adamsville-elevation-editor/main/editor/mollie-icon.png",
-      "sha256": "28990027fd79e03e2ef8416e8c1d3410ee284ec86383280968b245f08576e768"
     },
     {
       "path": "terraincanvas.py",
